@@ -19,6 +19,7 @@ import "../../utils/introspection/ERC165.sol";
 contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
     using Address for address;
     using Strings for uint256;
+    enum Commodity { fish, beans, cashews }
 
     // Token name
     string private _name;
@@ -28,7 +29,10 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
 
     // Mapping from token ID to owner address
     mapping(uint256 => address) private _owners;
-
+    
+    // Mapping from token ID to owner address
+    mapping(uint256 => uint256) private _weight;
+    
     // Mapping owner address to token count
     mapping(address => uint256) private _balances;
 
@@ -100,7 +104,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
     /**
      * @dev Base URI for computing {tokenURI}. If set, the resulting URI for each
      * token will be the concatenation of the `baseURI` and the `tokenId`. Empty
-     * by default, can be overridden in child contracts.
+     * by default, can be overriden in child contracts.
      */
     function _baseURI() internal view virtual returns (string memory) {
         return "";
@@ -285,6 +289,38 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
 
         _balances[to] += 1;
         _owners[tokenId] = to;
+
+        emit Transfer(address(0), to, tokenId);
+
+        _afterTokenTransfer(address(0), to, tokenId);
+    }
+
+    /**
+     * @dev Mints `tokenId` and transfers it to `to`.
+     *
+     * WARNING: Usage of this method is discouraged, use {_safeMint} whenever possible
+     *
+     * Requirements:
+     *
+     * - `tokenId` must not exist.
+     * - `to` cannot be the zero address.
+     *
+     * Emits a {Transfer} event.
+     */
+    function _tradeCoinMint(address to, uint256 tokenId, uint256 weight, string memory commodity, address legalOwner) internal virtual {
+        require(to != address(0), "ERC721: mint to the zero address");
+        require(!_exists(tokenId), "ERC721: token already minted");
+        require(!_exists(weight), "ERC721: weight not supplied");
+        // require(commodity, "ERC721: token already minted");
+        require(legalOwner != address(0), "ERC721: mint to the zero address");
+
+
+        _beforeTokenTransfer(address(0), to, tokenId);
+
+        _balances[to] += 1;
+        _balances[legalOwner] += 1;
+        _owners[tokenId] = to;
+        _weight[tokenId] = weight;
 
         emit Transfer(address(0), to, tokenId);
 
